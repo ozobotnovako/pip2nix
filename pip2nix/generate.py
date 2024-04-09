@@ -10,7 +10,10 @@ import os
 import re
 import shutil
 
-from pip._internal.models.target_python import TargetPython
+try:
+    from pip._internal.models.target_python import TargetPython
+except ImportError:
+    TargetPython = None
 
 try:
     from pip._internal.cli import cmdoptions
@@ -200,6 +203,10 @@ class NixFreezeCommand(InstallCommand):
 
         with self._build_session(options) as session:
             platform = self.config.get_config("pip2nix", "platform")
+
+            if platform and not TargetPython:
+                raise ValueError("Target platform specified, but pip is too old to support it.")
+
             target_python = TargetPython(platform)
             finder = self._build_package_finder(options, session, target_python)
             wheel_cache = WheelCache(options.cache_dir, options.format_control)
