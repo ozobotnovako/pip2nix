@@ -112,7 +112,7 @@ class PythonPackage(object):
         self.pip_req = pip_req
 
     @classmethod
-    def from_requirements(cls, req, deps, finder, check):
+    def from_requirements(cls, req, deps, finder, check, platform):
         def name_version(dep):
             return (
                 dep.name,
@@ -158,7 +158,11 @@ class PythonPackage(object):
                             pass
                         break
 
-        if ((source.path.endswith('.whl') and not source.path.endswith('-any.whl'))
+        platform_suffixes = ["-any.whl"]
+        if platform:
+            platform_suffixes.append(f"{platform}.whl")
+
+        if ((source.path.endswith('.whl') and not any(source.path.endswith(suffix) for suffix in platform_suffixes))
                 or source.path.endswith('.egg')):
             finder.format_control.disallow_binaries()
             source = finder.find_requirement(req, upgrade=False)

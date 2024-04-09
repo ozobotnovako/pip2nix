@@ -10,6 +10,8 @@ import os
 import re
 import shutil
 
+from pip._internal.models.target_python import TargetPython
+
 try:
     from pip._internal.cli import cmdoptions
 except:
@@ -98,7 +100,8 @@ class NixFreezeCommand(InstallCommand):
         packages = {
             req.name: PythonPackage.from_requirements(
                 req, resolver._discovered_dependencies.get(req.name, []),
-                finder, self.config["pip2nix"].get("check_inputs")
+                finder, self.config["pip2nix"].get("check_inputs"),
+                self.config.get_config("pip2nix", "platform")
             )
             for req in packages_base
             if not req.constraint
@@ -137,14 +140,16 @@ class NixFreezeCommand(InstallCommand):
                     packages[req.name] = PythonPackage.from_requirements(
                         requirement_set.requirements[req.name],
                         resolver._discovered_dependencies.get(req.name, []),
-                        finder, self.config["pip2nix"].get("check_inputs")
+                        finder, self.config["pip2nix"].get("check_inputs"),
+                        self.config.get_config("pip2nix", "platform")
                     )
                 except KeyError:
                     req.req.name = req.name.lower()  # try to work around case differences
                     packages[req.name] = PythonPackage.from_requirements(
                         requirement_set.requirements[req.name],
                         resolver._discovered_dependencies.get(req.name, []),
-                        finder, self.config["pip2nix"].get("check_inputs")
+                        finder, self.config["pip2nix"].get("check_inputs"),
+                        self.config.get_config("pip2nix", "platform")
                     )
 
         # If you need a newer version of setuptools or wheel, you know it and
@@ -194,7 +199,9 @@ class NixFreezeCommand(InstallCommand):
             upgrade_strategy = options.upgrade_strategy
 
         with self._build_session(options) as session:
-            finder = self._build_package_finder(options, session)
+            platform = self.config.get_config("pip2nix", "platform")
+            target_python = TargetPython(platform)
+            finder = self._build_package_finder(options, session, target_python)
             wheel_cache = WheelCache(options.cache_dir, options.format_control)
             try:
                 requirement_set = RequirementSet(
