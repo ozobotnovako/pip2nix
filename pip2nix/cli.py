@@ -52,6 +52,9 @@ def cli():
               help="Constrain versions based on the constraints file.")
 @click.option('--licenses/--no-licenses', default=False,
               help="Extract license information as well, off by default.")
+@click.option('--platform', default=None, type=str,
+              metavar="<platform>",
+              help="Specify target wheel platform, e.g., `manylinux2014_x86_64`.")
 @click.argument('specifiers', nargs=-1)
 def generate(specifiers, **kwargs):
     """Generate a .nix file with specified packages."""
